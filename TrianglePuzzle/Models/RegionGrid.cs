@@ -11,13 +11,13 @@ namespace TrianglePuzzle.Models
         int[] _sectorColumns = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
         string[] _sectorRows = { "A", "B", "C", "D", "E", "F" };
 
+        public string[] Keys { get; private set; }
+
         public CoordinateGrid CoordinateGrid { get; private set; }
 
         public List<List<GridBlock>> GridBlocks { get; private set; } = new List<List<GridBlock>>();
 
         public Dictionary<string, RightTriangle> TriangleDictionary { get; private set; } = new Dictionary<string, RightTriangle>();
-
-        public string[] Keys { get; private set; }
 
         public RegionGrid()
         {
@@ -25,11 +25,6 @@ namespace TrianglePuzzle.Models
             InitializeKeys();
             CreateGridBlocks();
             CreateTriangleDictionary();
-        }
-
-        private void AddTriangle(string key, RightTriangle rt)
-        {
-            TriangleDictionary.Add(key, rt);
         }
 
         private void InitializeKeys()
@@ -55,12 +50,11 @@ namespace TrianglePuzzle.Models
             for (int lineIndex = 0; lineIndex < CoordinateGrid.Lines.Count - 1; lineIndex++)
             {
                 int gridBlockId = 0, startIndex = 0, endIndex = 1;
-                GridBlock gridBlock = null;
                 var gridBlockRow = new List<GridBlock>();
 
                 while (gridBlockId < numberOfBlocksPerRow)
                 {
-                    gridBlock = new GridBlock
+                    var gridBlock = new GridBlock
                     {
                         Id = gridBlockId,
                         Coordinates = new List<Coordinate>()
@@ -102,12 +96,12 @@ namespace TrianglePuzzle.Models
                     var lowerLeftCoord = block.Coordinates[2];
                     var lowerRightCoord = block.Coordinates[3];
 
-                    RightTriangle lowerRT = new RightTriangle
+                    var lowerRT = new RightTriangle
                     {
                         Coordinates = new List<Coordinate> { topLeftCoord, lowerLeftCoord, lowerRightCoord }
                     };
 
-                    RightTriangle upperRT = new RightTriangle
+                    var upperRT = new RightTriangle
                     {
                         Coordinates = new List<Coordinate> { topLeftCoord, topRightCoord, lowerRightCoord }
                     };
@@ -118,6 +112,11 @@ namespace TrianglePuzzle.Models
                     keyNumber = keyNumber + 2;
                 }
             }
+        }
+
+        private void AddTriangle(string key, RightTriangle rt)
+        {
+            TriangleDictionary.Add(key, rt);
         }
     }
 }
