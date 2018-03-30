@@ -1,0 +1,146 @@
+﻿<div>
+    <h2>Triangle Puzzle</h2>
+</div>
+<br />
+<div>
+    <div>
+        <input id="btnLoadGrid" type="button" value="Load Grid" onclick="loadGrid()" />
+    </div>
+    <br />
+        <div id="divCanvas" style="display:none">
+            <select id="coordinatesSelect" onchange="displayRowColumnId()">
+                <option value="">Select Coordinates</option>
+            </select>
+            [x,y],[x,y],[x,y]
+            <br />
+            <h3>
+                <input id="txtRowColId" type="text" value="N/A" style="border:none;color:red" readonly="readonly" />
+            </h3>
+            <br />
+            <canvas id="myCanvas" width="600" height="600" style="background-color:cadetblue;" />
+        </div>
+    <div>
+        Rows A-F<br />
+        Columns 1-12<br />
+        60 pixels by 60 pixels times a multiplier of 10 for display purposes<br />
+        Lower Triangle Coordinate order [v1x,v1y],[v2x,v2y],[v3x,v3y]: Top-left, bottom-left, bottom-right<br />
+        Upper Triangle Coordinate order [v1x,v1y],[v2x,v2y],[v3x,v3y]: Top-left, top-right, bottom-right
+    </div>    
+</div>
+    
+@section scripts {
+    <script>
+        function loadGrid() {
+            $.ajax({
+                url: '/TrianglePuzzle/api/TrianglePuzzle/GetRegionGrid',
+                type: "GET",
+                dataType: "json",
+                data: JSON.stringify(""),
+                contentType: "application/json",
+                success: function (result) {
+                    if (result) {
+                        $('#divCanvas').show();
+                        draw(result.TriangleDictionary);
+                        buildCoordinateSelect(result.TriangleDictionary);
+                    }
+                    else {
+
+                    }
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(errorThrown);
+            }).always(function () {
+            });
+
+        };
+
+        function draw(triangles) {
+            var multiplier = 10; // turn 10px into 100px for better display
+            var canvas = document.getElementById('myCanvas');
+            if (canvas.getContext) {
+                var ctx = canvas.getContext('2d');
+                var startX;
+                var startY;
+                var lastLetter = '';
+                var newRow;
+
+                for (var triangle in triangles) {
+                    var coordinates = triangles[triangle];
+                    var points = coordinates['Coordinates'];
+
+                    var pointOne = points[0];
+                    var pointTwo = points[1];
+                    var pointThree = points[2];
+
+                    if (isOddTriangle(triangle)) {
+                        // Filled triangle
+                        if (isFirstTriangle(triangle, lastLetter)) {
+                            startX = pointOne.XPoint * multiplier;
+                            startY = pointOne.YPoint * multiplier;
+                        }
+                        ctx.beginPath();
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(pointTwo.XPoint * multiplier, pointTwo.YPoint * multiplier);
+                        ctx.lineTo(pointThree.XPoint * multiplier, pointThree.YPoint * multiplier);
+                        ctx.fillStyle = "white"
+                        ctx.fill();
+                        ctx.font = "25px Arial";
+                        ctx.fillStyle = "black"
+                        ctx.fillText(triangle, (pointTwo.XPoint + (multiplier / 5)) * multiplier, (pointTwo.YPoint - (multiplier / 5)) * multiplier) //offset slightly
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+                    else {
+                        // Stroked triangle
+                        ctx.beginPath();
+                        startX = pointTwo.XPoint * multiplier; // Second point of even triangles becomes next triangle start position, unless new row.
+                        startY = pointTwo.YPoint * multiplier;
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(pointTwo.XPoint * multiplier, pointTwo.YPoint * multiplier);
+                        ctx.lineTo(pointThree.XPoint * multiplier, pointThree.YPoint * multiplier);
+                        ctx.font = "25px Arial";
+                        ctx.fillStyle = "black"
+                        ctx.fillText(triangle, (pointTwo.XPoint - (multiplier / 2.5)) * multiplier, (pointTwo.YPoint + (multiplier / 2.5)) * multiplier) //offset slightly
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+
+                    lastLetter = triangle.substring(0,1);
+                }
+            }
+        };
+
+        function buildCoordinateSelect(triangles) {
+            var select = document.getElementById('coordinatesSelect');
+
+            for (var triangle in triangles) {
+                var coordinates = triangles[triangle];
+                var points = coordinates['Coordinates'];
+                var opt = document.createElement('option');
+                opt.innerHTML = 
+                    '[' + points[0].XPoint + ',' + points[0].YPoint + ']' + 
+                    '[' + points[1].XPoint + ',' + points[1].YPoint + ']' + 
+                    '[' + points[2].XPoint + ',' + points[2].YPoint + ']'
+                ;
+                opt.value = triangle;
+                select.appendChild(opt);
+            }
+        };
+
+        function displayRowColumnId() {
+            var select = document.getElementById('coordinatesSelect');
+            var value = select.options[select.selectedIndex].value;
+            document.getElementById('txtRowColId').value = value;
+        }
+
+        function isOddTriangle(triangle) {
+            return triangle.substring(1) % 2;
+        };
+
+        function isFirstTriangle(triangle, lastLetter) {
+            var test = (lastLetter === '') || (triangle.substring(0, 1) !== lastLetter && triangle.substring(1) == 1);
+            return test;
+        };
+
+    </script>
+}
